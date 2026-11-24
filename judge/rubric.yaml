@@ -1,0 +1,124 @@
+# Scoring rubric for the AI Interview Coach.
+# Every evaluation records `version`, so changing anything here means bumping it.
+version: "2026-11-01.v1"
+
+# How the two track scores combine into one, per session mode.
+combined_weights:
+  solo:        { readiness: 1.0, prompting: 0.0 }
+  ai_assisted: { readiness: 0.6, prompting: 0.4 }
+  interviewer: { readiness: 0.6, prompting: 0.4 }
+
+# Inclusive lower bounds, checked top-down.
+labels:
+  - { min: 3.5, label: "Interview-ready" }
+  - { min: 2.5, label: "Close: one or two gaps" }
+  - { min: 1.5, label: "Building" }
+  - { min: 0.0, label: "Early" }
+
+tracks:
+  readiness:
+    - id: correctness
+      name: Correctness
+      weight: 0.35
+      scored_by: code
+
+    - id: complexity
+      name: Complexity
+      weight: 0.20
+      scored_by: judge
+      definition: >
+        How the final solution's time and space complexity compares with the
+        problem's optimal complexity (given to you). Judge the code as written,
+        not what the candidate said they would do.
+      anchors:
+        0: "Brute force that would time out at the stated input size (e.g. O(n^3) where O(n) is optimal)."
+        2: "Works within limits but one factor off optimal (e.g. O(n log n) where O(n) is optimal, or extra O(n) space that is avoidable)."
+        4: "Matches optimal time and space."
+
+    - id: edge_cases
+      name: Edge cases
+      weight: 0.15
+      scored_by: code
+
+    - id: code_quality
+      name: Code quality
+      weight: 0.15
+      scored_by: judge
+      definition: >
+        Readability and structure of the final code: naming, function size,
+        duplication, idiomatic use of the language. Ignore complexity and
+        correctness; other dimensions cover those.
+      anchors:
+        0: "Hard to follow: single-letter names everywhere, no structure, dead code or copy-pasted blocks."
+        2: "Readable overall, with a few naming, duplication or structure issues a reviewer would flag."
+        4: "Clean names, small focused functions, idiomatic constructs; a reviewer would approve as is."
+
+    - id: independence_pace
+      name: Independence and pace
+      weight: 0.15
+      scored_by: code
+
+  prompting:
+    - id: framing
+      name: Problem framing
+      weight: 0.20
+      scored_by: judge
+      definition: >
+        Whether the candidate gave the assistant the context needed to help:
+        constraints, input size, expected complexity, language, and their own
+        starting idea. Look mainly at the first prompt and any prompt that
+        starts a new sub-problem.
+      anchors:
+        0: "\"two sum leetcode solve\""
+        2: "\"Find two numbers in an array that add to a target, in Python.\""
+        4: "\"Array up to 10^5 ints, may contain duplicates, need indices of two that sum to target. I'm thinking a hash map for O(n). Can you check whether duplicates break that?\""
+
+    - id: decomposition
+      name: Decomposition
+      weight: 0.20
+      scored_by: judge
+      definition: >
+        Whether the candidate broke the problem into steps and asked about one
+        at a time, rather than asking for the entire solution in one prompt.
+      anchors:
+        0: "One prompt asking for the complete solution; nothing else."
+        2: "Some step-by-step questions, but at least one prompt asks for the whole solution or whole function."
+        4: "Asks about the approach, then the data structure, then one tricky piece at a time; never requests the full solution."
+
+    - id: ownership
+      name: Reasoning ownership
+      weight: 0.25
+      scored_by: judge
+      definition: >
+        Whether the candidate did the thinking and used the assistant to check
+        or accelerate it. Credit prompts that state the candidate's own idea
+        and ask for critique.
+      anchors:
+        0: "Never states an idea of their own; every prompt asks the assistant to decide."
+        2: "States an idea once or twice, but key decisions are handed to the assistant."
+        4: "Proposes their approach before asking, asks the assistant to critique it, and makes the final calls."
+
+    - id: verification
+      name: Verification
+      weight: 0.20
+      scored_by: judge
+      definition: >
+        Whether the candidate checked the assistant's output: asked for tests
+        or edge cases, questioned a claim, or caught an error. Earlier is better
+        than after the code is written.
+      anchors:
+        0: "Accepts every output and submits it unchanged."
+        2: "Asks for tests or edge cases once, after the code is already written."
+        4: "Questions an assistant claim or catches an error, and asks for edge cases before writing code."
+
+    - id: efficiency
+      name: Efficiency
+      weight: 0.15
+      scored_by: judge
+      definition: >
+        Whether prompts were few and targeted. Follow-ups should add new
+        information rather than repeat or rephrase earlier prompts.
+      anchors:
+        0: "Many repeated or near-duplicate prompts; the conversation goes in circles."
+        2: "Some redundant prompts or vague follow-ups (\"that doesn't work\", \"try again\")."
+        4: "Few, targeted prompts; every follow-up adds information."
